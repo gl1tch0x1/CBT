@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}User Status - CBT System by NAME IT Education{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h1 class="text-xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-user text-primary-600 mr-3"></i>
+                User Status & Permissions
+            </h1>
+        </div>
+        <div class="p-6">
+                    {% if user.is_authenticated %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Logged In</strong> - You are currently authenticated
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>User Information</h6>
+                                <ul class="list-unstyled">
+                                    <li><strong>Username:</strong> {{ user.username }}</li>
+                                    <li><strong>Full Name:</strong> {{ user.get_full_name|default:"Not provided" }}</li>
+                                    <li><strong>Email:</strong> {{ user.email|default:"Not provided" }}</li>
+                                    {% if user.student_class %}
+                                        <li><strong>Class:</strong> {{ user.student_class.name }}</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Permissions</h6>
+                                <ul class="list-unstyled">
+                                    <li>
+                                        {% if user.is_superuser %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-crown me-1"></i>Super Admin
+                                            </span>
+                                        {% elif user.is_staff %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-chalkboard-teacher me-1"></i>Staff/Teacher
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-user-graduate me-1"></i>Student
+                                            </span>
+                                        {% endif %}
+                                    </li>
+                                    <li class="mt-2">
+                                        <strong>Can Access:</strong>
+                                        <ul class="mt-1">
+                                            <li>✅ Dashboard</li>
+                                            {% if user.is_staff or user.is_superuser %}
+                                                <li>✅ Question Bank</li>
+                                                <li>✅ Create Exams</li>
+                                                <li>✅ View Results</li>
+                                            {% else %}
+                                                <li>✅ Take Exams</li>
+                                                <li>✅ View My Results</li>
+                                            {% endif %}
+                                            {% if user.is_superuser %}
+                                                <li>✅ User Management</li>
+                                                <li>✅ Academic Setup</li>
+                                                <li>✅ System Administration</li>
+                                            {% endif %}
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>Quick Actions</h6>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                                </a>
+                                {% if user.is_superuser %}
+                                    <a href="{% url 'term_session' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-cogs me-1"></i>Academic Setup
+                                    </a>
+                                {% endif %}
+                                {% if user.is_staff or user.is_superuser %}
+                                    <a href="{% url 'questionbank' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-database me-1"></i>Question Bank
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'myexams' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-clipboard-list me-1"></i>My Exams
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Not Logged In</strong> - You need to sign in to access the system
+                        </div>
+                        
+                        <div class="text-center">
+                            <a href="{% url 'login' %}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

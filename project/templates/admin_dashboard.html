@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - CBT System by NAME IT Education{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    {% if user.is_superuser %}Admin{% else %}Staff{% endif %} Dashboard
+                </h2>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'exam-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Create Exam
+                    </a>
+                    <a href="{% url 'question-create' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-question me-1"></i>Add Question
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Exams
+                        <span class="badge bg-primary ms-2">{{ exams.paginator.count }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if exams %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Subject</th>
+                                        <th>Class</th>
+                                        <th>Duration</th>
+                                        <th>Questions</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for exam in exams %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ exam.title }}</strong>
+                                                <br><small class="text-muted">{{ exam.description|truncatewords:10 }}</small>
+                                            </td>
+                                            <td>{{ exam.subject.name }}</td>
+                                            <td>{{ exam.class_group.name }}</td>
+                                            <td>{{ exam.duration }} min</td>
+                                            <td>
+                                                <span class="badge bg-info">{{ exam.question_count }}</span>
+                                            </td>
+                                            <td>
+                                                {% if exam.published %}
+                                                    <span class="badge bg-success">Published</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Draft</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ exam.created|date:"M d, Y" }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{% url 'exam-detail' exam.id %}" class="btn btn-outline-primary" title="View">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'exam-update' exam.id %}" class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'scores' exam.id %}" class="btn btn-outline-info" title="Scores">
+                                                        <i class="fas fa-chart-bar"></i>
+                                                    </a>
+                                                    <a href="{% url 'exam-delete' exam.id %}" class="btn btn-outline-danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if exams.has_other_pages %}
+                            <nav aria-label="Exam pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if exams.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ exams.previous_page_number }}">Previous</a>
+                                        </li>
+                                    {% endif %}
+
+                                    {% for num in exams.paginator.page_range %}
+                                        {% if exams.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if exams.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ exams.next_page_number }}">Next</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No exams created yet</h5>
+                            <p class="text-muted">Start by creating your first exam.</p>
+                            <a href="{% url 'exam-create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Create Exam
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

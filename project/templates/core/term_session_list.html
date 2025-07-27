@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Academic Management - CBT System by NAME IT Education{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-cogs me-2"></i>Academic Management
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Academic Terms -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Academic Terms
+                        <span class="badge bg-primary ms-2">{{ terms.count }}</span>
+                    </h5>
+                    <a href="{% url 'term_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Term
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if terms %}
+                        <div class="list-group list-group-flush">
+                            {% for term in terms %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ term.name }}</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'term_update' term.id %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'term_delete' term.id %}" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar-alt fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No terms added yet</p>
+                            <a href="{% url 'term_create' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Add Term
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Sessions -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-check me-2"></i>Academic Sessions
+                        <span class="badge bg-primary ms-2">{{ sessions.count }}</span>
+                    </h5>
+                    <a href="{% url 'session_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Session
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if sessions %}
+                        <div class="list-group list-group-flush">
+                            {% for session in sessions %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ session.name }}</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'session_update' session.id %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'session_delete' session.id %}" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar-check fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No sessions added yet</p>
+                            <a href="{% url 'session_create' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Add Session
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Subjects -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>Subjects
+                        <span class="badge bg-primary ms-2">{{ subjects.count }}</span>
+                    </h5>
+                    <a href="{% url 'subject_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Subject
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if subjects %}
+                        <div class="list-group list-group-flush">
+                            {% for subject in subjects %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ subject.name }}</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'subject_update' subject.id %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'subject_delete' subject.id %}" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-book fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No subjects added yet</p>
+                            <a href="{% url 'subject_create' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Add Subject
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Classes -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Classes
+                        <span class="badge bg-primary ms-2">{{ classes.count }}</span>
+                    </h5>
+                    <a href="{% url 'class_create' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Add Class
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if classes %}
+                        <div class="list-group list-group-flush">
+                            {% for class in classes %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ class.name }}</span>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'class_update' class.id %}" class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'class_delete' class.id %}" class="btn btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No classes added yet</p>
+                            <a href="{% url 'class_create' %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Add Class
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

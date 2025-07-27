@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - CBT System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>{{ title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="question-form">
+                        {% csrf_token %}
+                        
+                        <!-- Question Details -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.subject.id_for_label }}" class="form-label">Subject</label>
+                                    {{ form.subject }}
+                                    {% if form.subject.errors %}
+                                        <div class="text-danger small">{{ form.subject.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.class_group.id_for_label }}" class="form-label">Class</label>
+                                    {{ form.class_group }}
+                                    {% if form.class_group.errors %}
+                                        <div class="text-danger small">{{ form.class_group.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.question.id_for_label }}" class="form-label">Question</label>
+                            {{ form.question }}
+                            {% if form.question.errors %}
+                                <div class="text-danger small">{{ form.question.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Answer Choices -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="fas fa-list me-2"></i>Answer Choices
+                                <small class="text-muted">(Select the correct answer)</small>
+                            </h6>
+                            
+                            {{ formset.management_form }}
+                            
+                            <div id="choices-container">
+                                {% for form in formset %}
+                                    <div class="choice-form mb-3 p-3 border rounded">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <label class="form-label">Choice {{ forloop.counter }}</label>
+                                                {{ form.body }}
+                                                {% if form.body.errors %}
+                                                    <div class="text-danger small">{{ form.body.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    {{ form.is_correct }}
+                                                    <label class="form-check-label" for="{{ form.is_correct.id_for_label }}">
+                                                        Correct Answer
+                                                    </label>
+                                                </div>
+                                                {% if form.is_correct.errors %}
+                                                    <div class="text-danger small">{{ form.is_correct.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-1">
+                                                {% if formset.can_delete %}
+                                                    <div class="form-check">
+                                                        {{ form.DELETE }}
+                                                        <label class="form-check-label text-danger" for="{{ form.DELETE.id_for_label }}">
+                                                            <i class="fas fa-trash"></i>
+                                                        </label>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Hidden fields -->
+                                        {% for hidden in form.hidden_fields %}
+                                            {{ hidden }}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if formset.non_form_errors %}
+                                <div class="alert alert-danger">
+                                    {{ formset.non_form_errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% if exam %}{% url 'exam-detail' exam.id %}{% else %}{% url 'questionbank' %}{% endif %}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Ensure only one correct answer is selected
+    $('input[name$="-is_correct"]').change(function() {
+        if ($(this).is(':checked')) {
+            $('input[name$="-is_correct"]').not(this).prop('checked', false);
+        }
+    });
+    
+    // Form validation
+    $('#question-form').submit(function(e) {
+        let hasCorrectAnswer = false;
+        let hasChoices = false;
+        
+        // Check if at least one choice is provided
+        $('textarea[name$="-body"]').each(function() {
+            if ($(this).val().trim() !== '') {
+                hasChoices = true;
+            }
+        });
+        
+        // Check if a correct answer is selected
+        $('input[name$="-is_correct"]:checked').each(function() {
+            hasCorrectAnswer = true;
+        });
+        
+        if (!hasChoices) {
+            e.preventDefault();
+            alert('Please provide at least one answer choice.');
+            return false;
+        }
+        
+        if (!hasCorrectAnswer) {
+            e.preventDefault();
+            alert('Please select the correct answer.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

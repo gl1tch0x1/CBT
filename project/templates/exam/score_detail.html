@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load cbt_extras %}
+
+{% block title %}Exam Results - {{ exam.title }} - CBT System by NAME IT Education{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-chart-bar text-primary-600 mr-3"></i>
+                    Exam Results
+                </h1>
+                <p class="mt-2 text-gray-600">Detailed performance analysis and feedback</p>
+            </div>
+            <div class="mt-4 sm:mt-0 flex space-x-3">
+                <button onclick="window.print()" class="bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium border border-gray-300 transition-colors duration-200">
+                    <i class="fas fa-print mr-2"></i>Print
+                </button>
+                <a href="{% url 'dashboard' %}" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200">
+                    <i class="fas fa-home mr-2"></i>Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Score Summary -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-trophy text-yellow-500 mr-3"></i>
+                        {{ exam.title }}
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Student:</span>
+                                <span class="text-sm text-gray-900">{{ answer.user.get_full_name|default:answer.user.username }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Subject:</span>
+                                <span class="text-sm text-gray-900">{{ exam.subject.name }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Class:</span>
+                                <span class="text-sm text-gray-900">{{ exam.class_group.name }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Duration:</span>
+                                <span class="text-sm text-gray-900">{{ exam.duration }} minutes</span>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Started:</span>
+                                <span class="text-sm text-gray-900">{{ answer.time_started|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Completed:</span>
+                                <span class="text-sm text-gray-900">{{ answer.time_completed|date:"M d, Y H:i" }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-500 w-20">Time Taken:</span>
+                                <span class="text-sm text-gray-900">
+                                    {% if answer.time_completed %}
+                                        {{ answer.time_completed|timeuntil:answer.time_started }}
+                                    {% else %}
+                                        In Progress
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 text-center">
+                <div class="p-6">
+                    <div class="text-6xl font-bold mb-4
+                        {% if answer.percent >= 70 %}text-green-600
+                        {% elif answer.percent >= 50 %}text-yellow-600
+                        {% else %}text-red-600{% endif %}">
+                        {{ answer.percent }}%
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Final Score</h3>
+                    <p class="text-gray-600 mb-4">
+                        {{ answer.score }} out of {{ answer.total_questions }} questions correct
+                    </p>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="h-3 rounded-full
+                            {% if answer.percent >= 70 %}bg-green-600
+                            {% elif answer.percent >= 50 %}bg-yellow-600
+                            {% else %}bg-red-600{% endif %}"
+                            style="width: {{ answer.percent }}%">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                            {% if answer.percent >= 70 %}bg-green-100 text-green-800
+                            {% elif answer.percent >= 60 %}bg-blue-100 text-blue-800
+                            {% elif answer.percent >= 50 %}bg-yellow-100 text-yellow-800
+                            {% elif answer.percent >= 40 %}bg-gray-100 text-gray-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            Grade:
+                            {% if answer.percent >= 70 %}A
+                            {% elif answer.percent >= 60 %}B
+                            {% elif answer.percent >= 50 %}C
+                            {% elif answer.percent >= 40 %}D
+                            {% else %}F{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Results -->
+    {% if exam.show_feedback %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-alt me-2"></i>Detailed Results
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for question in exam.questions.all %}
+                            {% with question_id=question.id|stringformat:'s' %}
+                            {% with user_choice=answer.choices|lookup:question_id %}
+                            <div class="card mb-3
+                                {% if user_choice.1 %}
+                                    border-success
+                                {% else %}
+                                    border-danger
+                                {% endif %}">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">Question {{ forloop.counter }}</h6>
+                                    {% if user_choice.1 %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Correct
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Incorrect
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text mb-3">{{ question.question|linebreaks }}</p>
+                                    
+                                    <div class="row">
+                                        {% for choice in question.choice_set.all %}
+                                            <div class="col-md-6 mb-2">
+                                                <div class="p-2 rounded
+                                                    {% if choice.is_correct %}
+                                                        bg-success text-white
+                                                    {% elif question.mychoice == choice.id %}
+                                                        bg-danger text-white
+                                                    {% else %}
+                                                        bg-light
+                                                    {% endif %}">
+                                                    <div class="d-flex align-items-center">
+                                                        {% if choice.is_correct %}
+                                                            <i class="fas fa-check-circle me-2"></i>
+                                                        {% elif question.mychoice == choice.id %}
+                                                            <i class="fas fa-times-circle me-2"></i>
+                                                        {% else %}
+                                                            <i class="far fa-circle me-2"></i>
+                                                        {% endif %}
+                                                        {{ choice.body }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    {% if question.mychoice %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <strong>Your answer:</strong> 
+                                                {% for choice in question.choice_set.all %}
+                                                    {% if choice.id == question.mychoice %}
+                                                        {{ choice.body }}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        </div>
+                                    {% else %}
+                                        <div class="mt-2">
+                                            <small class="text-warning">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                No answer provided
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endwith %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Performance Summary -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Performance Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-success">{{ answer.score }}</div>
+                                <div class="text-muted">Correct</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-danger">{{ answer.total_questions|add:answer.score|add:"-"|add:answer.score }}</div>
+                                <div class="text-muted">Incorrect</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 text-primary">{{ answer.total_questions }}</div>
+                                <div class="text-muted">Total Questions</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <div class="h4 
+                                    {% if answer.percent >= 70 %}text-success
+                                    {% elif answer.percent >= 50 %}text-warning
+                                    {% else %}text-danger{% endif %}">
+                                    {% if answer.percent >= 70 %}A
+                                    {% elif answer.percent >= 60 %}B
+                                    {% elif answer.percent >= 50 %}C
+                                    {% elif answer.percent >= 40 %}D
+                                    {% else %}F{% endif %}
+                                </div>
+                                <div class="text-muted">Grade</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn-group, .navbar, footer {
+        display: none !important;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}

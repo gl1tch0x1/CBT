@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Questions from Bank - {{ exam.title }} - CBT System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-database me-2"></i>Add Questions from Bank
+                </h2>
+                <a href="{% url 'exam-detail' exam.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Exam
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6 class="alert-heading">
+                    <i class="fas fa-info-circle me-2"></i>{{ exam.title }}
+                </h6>
+                <p class="mb-0">
+                    <strong>Subject:</strong> {{ exam.subject.name }} |
+                    <strong>Class:</strong> {{ exam.class_group.name }} |
+                    <strong>Current Questions:</strong> {{ exam.question_count }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% if questions %}
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" id="select-all" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-check-square me-1"></i>Select All
+                            </button>
+                            <button type="button" id="deselect-all" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-square me-1"></i>Deselect All
+                            </button>
+                        </div>
+                        <div>
+                            <span id="selected-count" class="badge bg-primary">0</span> questions selected
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                {% for question in questions %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 question-card">
+                            <div class="card-header">
+                                <div class="form-check">
+                                    <input class="form-check-input question-checkbox" 
+                                           type="checkbox" 
+                                           name="question[]" 
+                                           value="{{ question.id }}" 
+                                           id="question_{{ question.id }}">
+                                    <label class="form-check-label fw-bold" for="question_{{ question.id }}">
+                                        Question {{ forloop.counter }}
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ question.question|truncatewords:15 }}</p>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-book me-1"></i>{{ question.subject.name }}<br>
+                                        <i class="fas fa-users me-1"></i>{{ question.class_group.name }}
+                                    </small>
+                                </div>
+
+                                <!-- Preview Choices -->
+                                <div class="choices-preview">
+                                    <h6 class="small text-muted mb-2">Answer Choices:</h6>
+                                    {% for choice in question.choice_set.all %}
+                                        <div class="small mb-1 p-1 rounded 
+                                            {% if choice.is_correct %}bg-success text-white{% else %}bg-light{% endif %}">
+                                            {% if choice.is_correct %}
+                                                <i class="fas fa-check-circle me-1"></i>
+                                            {% else %}
+                                                <i class="far fa-circle me-1"></i>
+                                            {% endif %}
+                                            {{ choice.body|truncatewords:8 }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <button type="button" class="btn btn-outline-info btn-sm w-100" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#full-question-{{ question.id }}">
+                                    <i class="fas fa-eye me-1"></i>View Full Question
+                                </button>
+                                
+                                <!-- Full Question Details (Collapsible) -->
+                                <div class="collapse mt-2" id="full-question-{{ question.id }}">
+                                    <div class="border-top pt-2">
+                                        <h6 class="small">Full Question:</h6>
+                                        <p class="small">{{ question.question|linebreaks }}</p>
+                                        
+                                        <h6 class="small">All Choices:</h6>
+                                        {% for choice in question.choice_set.all %}
+                                            <div class="small mb-1 p-2 rounded 
+                                                {% if choice.is_correct %}bg-success text-white{% else %}bg-light{% endif %}">
+                                                {% if choice.is_correct %}
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                {% else %}
+                                                    <i class="far fa-circle me-1"></i>
+                                                {% endif %}
+                                                {{ choice.body }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <button type="submit" class="btn btn-primary btn-lg" id="add-questions-btn" disabled>
+                                <i class="fas fa-plus me-1"></i>Add Selected Questions to Exam
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    {% else %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-database fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No questions available</h5>
+                        <p class="text-muted">
+                            There are no questions in the question bank for this subject, 
+                            or all questions have already been added to this exam.
+                        </p>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'question-create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Create New Question
+                            </a>
+                            <a href="{% url 'add-question' exam.id %}" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-1"></i>Add Question to Exam
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    const checkboxes = $('.question-checkbox');
+    const selectedCount = $('#selected-count');
+    const addButton = $('#add-questions-btn');
+    
+    function updateSelectedCount() {
+        const count = checkboxes.filter(':checked').length;
+        selectedCount.text(count);
+        addButton.prop('disabled', count === 0);
+    }
+    
+    checkboxes.change(function() {
+        updateSelectedCount();
+        
+        // Highlight selected cards
+        const card = $(this).closest('.question-card');
+        if ($(this).is(':checked')) {
+            card.addClass('border-primary');
+        } else {
+            card.removeClass('border-primary');
+        }
+    });
+    
+    $('#select-all').click(function() {
+        checkboxes.prop('checked', true).trigger('change');
+    });
+    
+    $('#deselect-all').click(function() {
+        checkboxes.prop('checked', false).trigger('change');
+    });
+    
+    // Initial count
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

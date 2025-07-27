@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Students - CBT System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-users me-2"></i>Students
+                    <span class="badge bg-primary ms-2">{{ students.paginator.count }}</span>
+                </h2>
+                <a href="{% url 'student_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add Student
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if students %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Class</th>
+                                        <th>Gender</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for student in students %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ student.get_full_name|default:student.username }}</strong>
+                                            </td>
+                                            <td>{{ student.username }}</td>
+                                            <td>{{ student.email|default:"-" }}</td>
+                                            <td>
+                                                {% if student.student_class %}
+                                                    <span class="badge bg-info">{{ student.student_class.name }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">Not assigned</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ student.get_gender_display|default:"-" }}</td>
+                                            <td>
+                                                {% if student.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{% url 'student-update' student.id %}" 
+                                                       class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'user-delete' student.id %}" 
+                                                       class="btn btn-outline-danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if students.has_other_pages %}
+                            <nav aria-label="Students pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if students.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ students.previous_page_number }}">Previous</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in students.paginator.page_range %}
+                                        {% if students.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if students.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ students.next_page_number }}">Next</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No students found</h5>
+                            <p class="text-muted">Start by adding your first student.</p>
+                            <a href="{% url 'student_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add Student
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

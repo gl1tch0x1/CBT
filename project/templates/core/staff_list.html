@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Members - CBT System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-chalkboard-teacher me-2"></i>Staff Members
+                    <span class="badge bg-primary ms-2">{{ staff_members.paginator.count }}</span>
+                </h2>
+                <a href="{% url 'staff_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add Staff Member
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if staff_members %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Gender</th>
+                                        <th>Status</th>
+                                        <th>Date Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for staff in staff_members %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ staff.get_full_name|default:staff.username }}</strong>
+                                                <br><small class="text-muted">
+                                                    <i class="fas fa-chalkboard-teacher me-1"></i>Staff Member
+                                                </small>
+                                            </td>
+                                            <td>{{ staff.username }}</td>
+                                            <td>{{ staff.email|default:"-" }}</td>
+                                            <td>{{ staff.get_gender_display|default:"-" }}</td>
+                                            <td>
+                                                {% if staff.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ staff.date_joined|date:"M d, Y" }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{% url 'staff-update' staff.id %}" 
+                                                       class="btn btn-outline-secondary" title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <a href="{% url 'user-delete' staff.id %}" 
+                                                       class="btn btn-outline-danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if staff_members.has_other_pages %}
+                            <nav aria-label="Staff pagination">
+                                <ul class="pagination justify-content-center">
+                                    {% if staff_members.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ staff_members.previous_page_number }}">Previous</a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in staff_members.paginator.page_range %}
+                                        {% if staff_members.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if staff_members.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ staff_members.next_page_number }}">Next</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No staff members found</h5>
+                            <p class="text-muted">Start by adding your first staff member.</p>
+                            <a href="{% url 'staff_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add Staff Member
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

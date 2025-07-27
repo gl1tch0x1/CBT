@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ exam.title }} - CBT System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ exam.title }}</h2>
+                {% if user.is_staff or user.is_superuser %}
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'add-question' exam.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add Question
+                        </a>
+                        <a href="{% url 'add-question-from-bank' exam.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-database me-1"></i>From Bank
+                        </a>
+                        <a href="{% url 'exam-update' exam.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Edit
+                        </a>
+                        <a href="{% url 'scores' exam.id %}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar me-1"></i>Scores
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Exam Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Subject:</strong> {{ exam.subject.name }}</p>
+                            <p><strong>Class:</strong> {{ exam.class_group.name }}</p>
+                            <p><strong>Duration:</strong> {{ exam.duration }} minutes</p>
+                            <p><strong>Type:</strong> {{ exam.get_exam_type_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Session:</strong> {{ exam.session.name }}</p>
+                            <p><strong>Term:</strong> {{ exam.term.name }}</p>
+                            <p><strong>Questions:</strong> {{ exam.question_count }}</p>
+                            <p><strong>Status:</strong> 
+                                {% if exam.published %}
+                                    <span class="badge bg-success">Published</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Draft</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Description:</strong></p>
+                            <p>{{ exam.description|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if questions %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-question-circle me-2"></i>Questions
+                            <span class="badge bg-primary ms-2">{{ questions.count }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for question in questions %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-title">Question {{ forloop.counter }}</h6>
+                                            <p class="card-text">{{ question.question|linebreaks }}</p>
+                                            
+                                            <div class="row">
+                                                {% for choice in question.choice_set.all %}
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" disabled>
+                                                            <label class="form-check-label {% if choice.is_correct %}text-success fw-bold{% endif %}">
+                                                                {{ choice.body }}
+                                                                {% if choice.is_correct %}
+                                                                    <i class="fas fa-check text-success ms-1"></i>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% if user.is_staff or user.is_superuser %}
+                                            <div class="btn-group btn-group-sm ms-3" role="group">
+                                                <a href="{% url 'examquestion-update' question.id exam.id %}" class="btn btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'remove-question' question.id exam.id %}" class="btn btn-outline-danger" title="Remove">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card mt-4">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No questions added yet</h5>
+                        <p class="text-muted">Start by adding questions to this exam.</p>
+                        {% if user.is_staff or user.is_superuser %}
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'add-question' exam.id %}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Add Question
+                                </a>
+                                <a href="{% url 'add-question-from-bank' exam.id %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-database me-1"></i>From Bank
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" {% if exam.show_feedback %}checked{% endif %} disabled>
+                        <label class="form-check-label">Show Feedback</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" {% if exam.show_result %}checked{% endif %} disabled>
+                        <label class="form-check-label">Show Result</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" {% if exam.show_on_report %}checked{% endif %} disabled>
+                        <label class="form-check-label">Show on Report</label>
+                    </div>
+                </div>
+            </div>
+
+            {% if not user.is_staff and not user.is_superuser %}
+                <div class="card mt-3">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">Ready to take this exam?</h6>
+                        <p class="card-text">Make sure you have {{ exam.duration }} minutes available.</p>
+                        <a href="{% url 'take' exam.id %}" class="btn btn-primary">
+                            <i class="fas fa-play me-1"></i>Start Exam
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
