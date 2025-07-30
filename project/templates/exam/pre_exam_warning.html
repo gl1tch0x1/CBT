@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ exam.title }} - Anti-Cheating Warning - CBT System by NAME IT Education{% endblock %}
+
+{% block extra_css %}
+<style>
+.warning-card {
+    border-left: 5px solid #dc3545;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+}
+.instruction-card {
+    border-left: 5px solid #007bff;
+    background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+}
+.exam-info-card {
+    border-left: 5px solid #28a745;
+    background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+}
+.warning-icon {
+    font-size: 3rem;
+    color: #dc3545;
+}
+.info-icon {
+    font-size: 3rem;
+    color: #007bff;
+}
+.success-icon {
+    font-size: 3rem;
+    color: #28a745;
+}
+.start-exam-btn {
+    font-size: 1.2rem;
+    padding: 15px 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s ease;
+}
+.start-exam-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+.checkbox-container {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0;
+}
+.checkbox-container.checked {
+    border-color: #28a745;
+    background: #f8fff8;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold text-primary">{{ exam.title }}</h1>
+                <p class="lead text-muted">{{ exam.subject.name }} - {{ exam.get_exam_type_display }}</p>
+            </div>
+
+            <!-- Exam Information -->
+            <div class="card exam-info-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-info-circle success-icon"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h4 class="card-title text-success mb-3">Exam Information</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong><i class="fas fa-clock me-2"></i>Duration:</strong> {{ exam.duration }} minutes</p>
+                                    <p><strong><i class="fas fa-question-circle me-2"></i>Questions:</strong> {{ exam.questions.count }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong><i class="fas fa-calendar me-2"></i>Session:</strong> {{ exam.session.name }}</p>
+                                    <p><strong><i class="fas fa-users me-2"></i>Class:</strong> {{ exam.class_group.name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Anti-Cheating Warning -->
+            <div class="card warning-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-exclamation-triangle warning-icon"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h4 class="card-title text-danger mb-3">⚠️ ANTI-CHEATING WARNING</h4>
+                            <div class="alert alert-danger mb-3">
+                                <strong>IMPORTANT:</strong> This exam is monitored by advanced anti-cheating technology. Any suspicious activity will result in immediate exam termination.
+                            </div>
+                            <h6 class="text-danger mb-2">The following activities are STRICTLY PROHIBITED and will terminate your exam:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Opening new browser tabs or windows</li>
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Switching to other applications or windows</li>
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Using browser developer tools (F12, Inspect Element)</li>
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Copy and paste operations</li>
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Right-clicking or using context menus</li>
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Minimizing the browser window</li>
+                                <li class="mb-2"><i class="fas fa-times-circle text-danger me-2"></i>Using keyboard shortcuts to navigate away</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card instruction-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-list-check info-icon"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h4 class="card-title text-primary mb-3">Exam Instructions</h4>
+                            <ol class="mb-0">
+                                <li class="mb-2">Ensure you have a stable internet connection</li>
+                                <li class="mb-2">Close all other applications and browser tabs before starting</li>
+                                <li class="mb-2">The exam will automatically enter fullscreen mode</li>
+                                <li class="mb-2">The timer will start only when you click "Start Exam"</li>
+                                <li class="mb-2">You cannot pause or restart the exam once started</li>
+                                <li class="mb-2">Your answers are automatically saved as you progress</li>
+                                <li class="mb-2">Submit your exam before time expires to avoid auto-submission</li>
+                                <li class="mb-2">If you experience technical issues, contact your instructor immediately</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acknowledgment Checkbox -->
+            <div class="checkbox-container" id="acknowledgment-container">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="acknowledgment-checkbox" required>
+                    <label class="form-check-label fw-bold" for="acknowledgment-checkbox">
+                        I have read and understood all the anti-cheating warnings and exam instructions. I acknowledge that any violation will result in immediate exam termination and potential academic consequences.
+                    </label>
+                </div>
+            </div>
+
+            <!-- Start Exam Button -->
+            <div class="text-center mb-5">
+                <form method="post" id="start-exam-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary start-exam-btn" id="start-exam-btn" name="start_exam" value="true" disabled>
+                        <i class="fas fa-play me-2"></i>Start Exam
+                    </button>
+                </form>
+                <p class="text-muted mt-3">
+                    <small>Once you click "Start Exam", the timer will begin and you cannot return to this page.</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Enable start button only when checkbox is checked
+    $('#acknowledgment-checkbox').change(function() {
+        const isChecked = $(this).is(':checked');
+        $('#start-exam-btn').prop('disabled', !isChecked);
+        
+        // Visual feedback
+        const container = $('#acknowledgment-container');
+        if (isChecked) {
+            container.addClass('checked');
+        } else {
+            container.removeClass('checked');
+        }
+    });
+
+    // Confirm before starting exam
+    $('#start-exam-form').submit(function(e) {
+        if (!$('#acknowledgment-checkbox').is(':checked')) {
+            e.preventDefault();
+            alert('Please acknowledge that you have read and understood the anti-cheating warnings.');
+            return false;
+        }
+        
+        if (!confirm('Are you ready to start the exam? The timer will begin immediately and you cannot return to this page.')) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        $('#start-exam-btn').html('<i class="fas fa-spinner fa-spin me-2"></i>Starting Exam...').prop('disabled', true);
+    });
+
+    // (Removed beforeunload handler to prevent double popups and false termination)
+});
+</script>
+{% endblock %}

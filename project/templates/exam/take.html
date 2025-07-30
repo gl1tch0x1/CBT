@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Taking {{ exam.title }} - CBT System by NAME IT Education{% endblock %}
 
@@ -18,17 +19,92 @@
 .choice-option:hover {
     background-color: #f8f9fa;
 }
+
+/* Anti-cheating styles */
+.anti-cheat-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    z-index: 9999;
+    font-weight: bold;
+    display: none;
+}
+
+.exam-container {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Disable text selection except for inputs */
+.exam-container * {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.exam-container input[type="radio"],
+.exam-container input[type="checkbox"],
+.exam-container textarea {
+    user-select: auto;
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    -ms-user-select: auto;
+}
+
+/* Fullscreen styles */
+.fullscreen-notice {
+    background: #28a745;
+    color: white;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+/* Blinking animation for urgent timer */
+.blink {
+    animation: blink-animation 1s steps(5, start) infinite;
+}
+
+@keyframes blink-animation {
+    to {
+        visibility: hidden;
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<!-- Anti-cheating warning banner -->
+<div class="anti-cheat-warning" id="anti-cheat-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    ANTI-CHEATING MONITORING ACTIVE - Any suspicious activity will terminate your exam
+</div>
+
+<div class="container-fluid exam-container" id="exam-content">
+    <!-- Fullscreen notice -->
+    <div class="fullscreen-notice text-center" id="fullscreen-notice">
+        <i class="fas fa-expand me-2"></i>Exam is running in secure fullscreen mode
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="alert alert-info d-flex justify-content-between align-items-center">
                 <div>
                     <strong>{{ exam.title }}</strong> - {{ exam.subject.name }}
                     <br><small>Duration: {{ exam.duration }} minutes | Questions: {{ exam.questions.count }}</small>
+                    <br><small class="text-warning">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Anti-cheating monitoring is active. Do not switch tabs, open developer tools, or leave this window.
+                    </small>
                 </div>
                 <div class="timer-display text-danger" id="timer">
                     <i class="fas fa-clock me-1"></i>
@@ -96,7 +172,7 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success" id="submit-exam">
+                            <button type="submit" class="btn btn-success" id="submit-exam" name="submit_exam" value="true">
                                 <i class="fas fa-paper-plane me-1"></i>Submit Exam
                             </button>
                             <button type="button" class="btn btn-warning" id="save-draft" disabled>
@@ -140,16 +216,72 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Load anti-cheating JavaScript -->
+<script src="{% load static %}{% static 'js/anti-cheating.js' %}"></script>
+
 <script>
 $(document).ready(function() {
-    // Timer functionality
-    const expiryTime = new Date("{{ expiry_time|date:'c' }}");
+    // Initialize anti-cheating monitor
+    const antiCheatMonitor = new AntiCheatMonitor({
+        csrfToken: '{{ csrf_token }}',
+        examId: '{{ exam.id }}',
+        onTerminate: function(reason, violations) {
+            // Custom termination handler
+            console.error('Exam terminated:', reason);
+
+            // Hide exam content
+            $('#exam-content').hide();
+
+            // Show termination message
+            const terminationHtml = `
+                <div class="container mt-5">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="alert alert-danger text-center" style="padding: 40px; border: 3px solid #dc3545;">
+                                <i class="fas fa-exclamation-triangle fa-4x mb-4 text-danger"></i>
+                                <h2 class="text-danger mb-3">EXAM TERMINATED</h2>
+                                <p class="lead mb-3">The exam is terminated due to suspicious cheating activity.</p>
+                                <p><strong>Reason:</strong> ${reason}</p>
+                                <p class="mt-4">Please contact your instructor if you believe this is an error.</p>
+                                <div class="mt-4">
+                                    <button class="btn btn-secondary" onclick="window.location.href='/exam/myexams/'">
+                                        <i class="fas fa-arrow-left me-2"></i>Return to My Exams
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('body').html(terminationHtml);
+
+            // Submit termination to server
+            $.post(window.location.href, {
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'terminate_exam': 'true',
+                'termination_reason': reason
+            });
+        }
+    });
+
+
+    // Timer functionality with fallback for missing/invalid expiry_time
+    const expiryTimeStr = "{{ expiry_time|date:'c' }}";
+    const expiryTime = expiryTimeStr ? new Date(expiryTimeStr) : null;
 
     function updateTimer() {
+        if (!expiryTime || isNaN(expiryTime.getTime())) {
+            $('#time-remaining').text('Timer unavailable');
+            return;
+        }
         const now = new Date();
         const timeLeft = expiryTime - now;
 
         if (timeLeft <= 0) {
+            // Stop anti-cheat monitoring before auto-submit
+            antiCheatMonitor.stopMonitoring();
+
             // Time's up - auto submit
             $('#autoSubmitModal').modal('show');
             $('#confirm-auto-submit').click(function() {
@@ -196,14 +328,18 @@ $(document).ready(function() {
         navButton.removeClass('btn-outline-secondary').addClass('btn-success');
     });
 
-    // Confirm before leaving page
+    // Enhanced beforeunload handling
     window.addEventListener('beforeunload', function(e) {
-        e.preventDefault();
-        e.returnValue = '';
+        if (antiCheatMonitor.isActive) {
+            e.preventDefault();
+            e.returnValue = 'Are you sure you want to leave? Your exam will be terminated.';
+            return e.returnValue;
+        }
     });
 
-    // Remove confirmation when submitting
+    // Remove confirmation and stop monitoring when submitting
     $('#exam-form').submit(function() {
+        antiCheatMonitor.stopMonitoring();
         window.removeEventListener('beforeunload', function() {});
         clearInterval(timerInterval);
     });
@@ -212,22 +348,30 @@ $(document).ready(function() {
     $('#submit-exam').click(function(e) {
         e.preventDefault();
         if (confirm('Are you sure you want to submit your exam? You cannot change your answers after submission.')) {
+            antiCheatMonitor.stopMonitoring();
             $('#exam-form').submit();
+        }
+    });
+
+    // Show anti-cheat warning briefly
+    $('#anti-cheat-warning').fadeIn(500).delay(3000).fadeOut(500);
+
+    // Disable right-click and text selection (additional layer)
+    $(document).on('contextmenu', function(e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // Disable F12 and other dev tools shortcuts (additional layer)
+    $(document).keydown(function(e) {
+        if (e.keyCode === 123 || // F12
+            (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+            (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+            (e.ctrlKey && e.keyCode === 85)) { // Ctrl+U
+            e.preventDefault();
+            return false;
         }
     });
 });
 </script>
-
-<style>
-/* Blinking animation for urgent timer */
-.blink {
-    animation: blink-animation 1s steps(5, start) infinite;
-}
-
-@keyframes blink-animation {
-    to {
-        visibility: hidden;
-    }
-}
-</style>
 {% endblock %}

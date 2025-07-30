@@ -3,10 +3,12 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Case, IntegerField, Prefetch, Value, When
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView, View
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
@@ -283,6 +285,7 @@ class RemoveQuestionFromExamView(StaffAndAdminMixin, DeleteView):
 
 class TakeExamView(LoginRequiredMixin, View):
     template_name = "exam/take.html"
+    pre_exam_template_name = "exam/pre_exam_warning.html"
 
     @property
     def get_exam(self):
@@ -306,45 +309,98 @@ class TakeExamView(LoginRequiredMixin, View):
             messages.warning(request, "You have already submitted this exam.")
             return redirect("score-detail", exam.id, request.user.id)
 
-        # Calculate expiry time
-        alloted = timezone.timedelta(minutes=exam.duration)
-        expiry_time = score.time_started + alloted
-
-        # Check if exam time has expired
-        if timezone.now() > expiry_time:
-            score.is_complete = True
-            score.time_completed = timezone.now()
-            score.save()
-            messages.warning(request, "Exam time has expired. Your answers have been auto-submitted.")
+        # Check if exam was terminated
+        if score.status == 'terminated':
+            messages.error(request, f"This exam was terminated due to: {score.termination_reason}")
             return redirect("score-detail", exam.id, request.user.id)
 
-        context = {
-            "exam": exam,
-            "score": score,
-            "expiry_time": expiry_time,
-        }
-        return render(request, self.template_name, context)
+        # If exam hasn't been started yet, show pre-exam warning
+        if score.status == 'not_started':
+            context = {
+                "exam": exam,
+                "score": score,
+            }
+            return render(request, self.pre_exam_template_name, context)
+
+        # If exam is in progress, check if time has expired
+        if score.time_started:
+            alloted = timezone.timedelta(minutes=exam.duration)
+            expiry_time = score.time_started + alloted
+
+            # Check if exam time has expired
+            if timezone.now() > expiry_time:
+                score.is_complete = True
+                score.status = 'completed'
+                score.time_completed = timezone.now()
+                score.save()
+                messages.warning(request, "Exam time has expired. Your answers have been auto-submitted.")
+                return redirect("score-detail", exam.id, request.user.id)
+
+            context = {
+                "exam": exam,
+                "score": score,
+                "expiry_time": expiry_time,
+            }
+            return render(request, self.template_name, context)
+
+        # Fallback - redirect to pre-exam warning
+        return redirect("take", exam.id)
 
     def post(self, request, *args, **kwargs):
         data = request.POST
         exam = self.get_exam
-        questions = exam.questions.all()
-        choices = {}
-
-        for question in questions:
-            choice = data.get(str(question.id), "")
-            if choice:
-                is_correct = Choice.objects.get(pk=int(choice)).is_correct
-                choices[question.id] = [choice, is_correct]
-
         score = self.get_score
-        score.time_completed = timezone.now()
-        score.is_complete = True
-        score.choices = choices
-        score.save()
 
-        messages.success(request, "Exam submitted successfully!")
-        return redirect("score-detail", kwargs["exam_id"], request.user.id)
+        # Handle exam start (from pre-exam warning page)
+        if 'start_exam' in data or score.status == 'not_started':
+            # Check if exam was already started or completed
+            if score.status in ['in_progress', 'completed', 'terminated']:
+                messages.warning(request, "Exam has already been started or completed.")
+                return redirect("take", exam.id)
+
+            # Start the exam
+            score.time_started = timezone.now()
+            score.status = 'in_progress'
+            score.save()
+
+            messages.success(request, "Exam started successfully! Timer is now running.")
+            return redirect("take", exam.id)
+
+        # Handle exam termination (from JavaScript anti-cheating detection)
+        elif 'terminate_exam' in data:
+            termination_reason = data.get('termination_reason', 'Suspicious cheating activity detected')
+
+            score.time_completed = timezone.now()
+            score.is_complete = True
+            score.status = 'terminated'
+            score.termination_reason = termination_reason
+            score.save()
+
+            messages.error(request, "The exam is terminated due to suspicious cheating activity.")
+            return redirect("score-detail", kwargs["exam_id"], request.user.id)
+
+        # Handle exam submission (from actual exam page)
+        elif 'submit_exam' in data:
+            questions = exam.questions.all()
+            choices = {}
+
+            for question in questions:
+                choice = data.get(str(question.id), "")
+                if choice:
+                    is_correct = Choice.objects.get(pk=int(choice)).is_correct
+                    choices[question.id] = [choice, is_correct]
+
+            score.time_completed = timezone.now()
+            score.is_complete = True
+            score.status = 'completed'
+            score.choices = choices
+            score.save()
+
+            messages.success(request, "Exam submitted successfully!")
+            return redirect("score-detail", kwargs["exam_id"], request.user.id)
+
+        # Default fallback
+        return redirect("take", exam.id)
 
 
 class ExamScoreView(LoginRequiredMixin, View):
@@ -422,3 +478,47 @@ class MyExamsView(LoginRequiredMixin, View):
 
         context = {"exams": exams}
         return render(request, self.template_name, context)
+
+
+@csrf_exempt
+@require_POST
+def terminate_exam_ajax(request, exam_id):
+    """
+    AJAX endpoint for terminating exam due to anti-cheating violations
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+
+    try:
+        exam = get_object_or_404(Exam, pk=exam_id)
+        answer = get_object_or_404(Answer, exam=exam, user=request.user)
+
+        # Check if exam is already completed or terminated
+        if answer.status in ['completed', 'terminated']:
+            return JsonResponse({'error': 'Exam already completed or terminated'}, status=400)
+
+        # Get termination reason from request
+        termination_reason = request.POST.get('reason', 'Suspicious cheating activity detected')
+
+        # Terminate the exam
+        answer.time_completed = timezone.now()
+        answer.is_complete = True
+        answer.status = 'terminated'
+        answer.termination_reason = termination_reason
+        answer.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Exam terminated successfully',
+            'redirect_url': f'/exam/scores/{exam_id}/{request.user.id}/'
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def test_anti_cheating(request):
+    """
+    Test page for anti-cheating functionality
+    """
+    return render(request, 'exam/test_anti_cheating.html')

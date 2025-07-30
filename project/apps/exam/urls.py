@@ -22,10 +22,14 @@ urlpatterns = [
     
     # Exam taking
     path("take/<int:exam_id>/", views.TakeExamView.as_view(), name="take"),
+    path("terminate/<int:exam_id>/", views.terminate_exam_ajax, name="terminate-exam"),
     path("myexams/", views.MyExamsView.as_view(), name="myexams"),
     
     # Results and scoring
     path("<int:exam_id>/scores/", views.ExamScoreView.as_view(), name="scores"),
     path("scores/<int:exam_id>/<int:uid>/", views.ExamScoreDetailView.as_view(), name="score-detail"),
     path("scores/<int:pk>/delete/", views.ScoreDeleteView.as_view(), name="score-delete"),
+
+    # Testing
+    path("test-anti-cheating/", views.test_anti_cheating, name="test-anti-cheating"),
 ]

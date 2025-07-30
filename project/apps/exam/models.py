@@ -82,14 +82,24 @@ class Exam(models.Model):
 
 
 class Answer(models.Model):
+    EXAM_STATUS_CHOICES = [
+        ('not_started', 'Not Started'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('terminated', 'Terminated'),
+    ]
+
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
     )
-    time_started = models.DateTimeField(auto_now_add=True)
+    time_created = models.DateTimeField(auto_now_add=True)  # When answer record was created
+    time_started = models.DateTimeField(null=True, blank=True)  # When exam actually started
     time_completed = models.DateTimeField(null=True, blank=True)
     is_complete = models.BooleanField(default=False)
-    choices = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=EXAM_STATUS_CHOICES, default='not_started')
+    termination_reason = models.TextField(blank=True, null=True)  # Reason for termination if applicable
+    choices = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"Score for {self.user} in {self.exam}"
